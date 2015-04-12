@@ -12,5 +12,6 @@ namespace Shuttle.ESB.Core
         void Subscribe<T>();
 
         IEnumerable<string> GetSubscribedUris(object message);
+        IEnumerable<string> GetSubscribedUris(string messageType);
     }
 }

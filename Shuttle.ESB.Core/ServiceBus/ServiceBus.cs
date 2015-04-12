@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Shuttle.Core.Infrastructure;
 
 namespace Shuttle.ESB.Core
@@ -156,34 +157,59 @@ namespace Shuttle.ESB.Core
 			return new ServiceBus(configurator.Configuration());
 		}
 
-		public TransportMessage CreateTransportMessage(object message, Action<TransportMessageConfigurator> configure)
-		{
-			return _messageSender.CreateTransportMessage(message, configure);
-		}
+        public TransportMessage CreateTransportMessage(object message, Action<TransportMessageConfigurator> configure)
+        {
+            return _messageSender.CreateTransportMessage(message, configure);
+        }
+
+        public TransportMessage CreateTransportMessage(string messageType, Stream serializedMessage, Action<TransportMessageConfigurator> configure)
+        {
+            return _messageSender.CreateTransportMessage(messageType, serializedMessage, configure);
+        }
 
 		public void Dispatch(TransportMessage transportMessage)
 		{
 			_messageSender.Dispatch(transportMessage);
 		}
 
-		public TransportMessage Send(object message)
-		{
-			return _messageSender.Send(message);
-		}
+        public TransportMessage Send(object message)
+        {
+            return _messageSender.Send(message);
+        }
 
-		public TransportMessage Send(object message, Action<TransportMessageConfigurator> configure)
-		{
-			return _messageSender.Send(message, configure);
-		}
+        public TransportMessage Send(string messageType, Stream serializedMessage)
+        {
+            return _messageSender.Send(messageType, serializedMessage);
+        }
 
-		public IEnumerable<TransportMessage> Publish(object message)
-		{
-			return _messageSender.Publish(message);
-		}
+        public TransportMessage Send(object message, Action<TransportMessageConfigurator> configure)
+        {
+            return _messageSender.Send(message, configure);
+        }
 
-		public IEnumerable<TransportMessage> Publish(object message, Action<TransportMessageConfigurator> configure)
-		{
-			return _messageSender.Publish(message, configure);
-		}
+        public TransportMessage Send(string messageType, Stream serializedMessage, Action<TransportMessageConfigurator> configure)
+        {
+            return _messageSender.Send(messageType, serializedMessage, configure);
+        }
+
+        public IEnumerable<TransportMessage> Publish(object message)
+        {
+            return _messageSender.Publish(message);
+        }
+
+        public IEnumerable<TransportMessage> Publish(string messageType, Stream serializedMessage)
+        {
+            return _messageSender.Publish(messageType, serializedMessage);
+        }
+
+        public IEnumerable<TransportMessage> Publish(object message, Action<TransportMessageConfigurator> configure)
+        {
+            return _messageSender.Publish(message, configure);
+        }
+
+        public IEnumerable<TransportMessage> Publish(string messageType, Stream serializedMessage, Action<TransportMessageConfigurator> configure)
+        {
+            return _messageSender.Publish(messageType, serializedMessage, configure);
+        }
 	}
 }

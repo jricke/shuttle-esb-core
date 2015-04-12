@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Security.Principal;
 using Shuttle.Core.Infrastructure;
 
@@ -7,6 +8,8 @@ namespace Shuttle.ESB.Core
 {
 	public class TransportMessageConfigurator
 	{
+	    private readonly string _messageType;
+
 		private bool _local;
 		private string _recipientInboxWorkQueueUri;
 		private TransportMessage _transportMessageReceived;
@@ -15,19 +18,36 @@ namespace Shuttle.ESB.Core
 
 		public List<TransportHeader> Headers { get; set; }
 		public object Message { get; private set; }
+        public Stream SerializedMessage { get; private set; }
 
-		public TransportMessageConfigurator(object message)
-		{
-			Guard.AgainstNull(message, "message");
+        public TransportMessageConfigurator(object message)
+        {
+            Guard.AgainstNull(message, "message");
 
-			Headers = new List<TransportHeader>();
-			Message = message;
+            Headers = new List<TransportHeader>();
+            Message = message;
 
-			_correlationId = string.Empty;
-			_ignoreTillDate = DateTime.MinValue;
-			_recipientInboxWorkQueueUri = null;
-			_local = false;
-		}
+            _messageType = Message.GetType().FullName;
+            _correlationId = string.Empty;
+            _ignoreTillDate = DateTime.MinValue;
+            _recipientInboxWorkQueueUri = null;
+            _local = false;
+        }
+
+        public TransportMessageConfigurator(string messageType, Stream serializedMessage)
+        {
+            Guard.AgainstNullOrEmptyString(messageType, "messageType");
+            Guard.AgainstNull(serializedMessage, "serializedMessage");
+
+            Headers = new List<TransportHeader>();
+            SerializedMessage = serializedMessage;
+
+            _messageType = messageType;
+            _correlationId = string.Empty;
+            _ignoreTillDate = DateTime.MinValue;
+            _recipientInboxWorkQueueUri = null;
+            _local = false;
+        }
 
 		public TransportMessage TransportMessage(IServiceBusConfiguration configuration)
 		{
@@ -48,7 +68,7 @@ namespace Shuttle.ESB.Core
 						                        ? identity.Name
 						                        : WindowsIdentity.GetAnonymous().Name,
 					IgnoreTillDate = _ignoreTillDate,
-					MessageType = Message.GetType().FullName,
+					MessageType = _messageType,
 					AssemblyQualifiedName = Message.GetType().AssemblyQualifiedName,
 					EncryptionAlgorithm = configuration.EncryptionAlgorithm,
 					CompressionAlgorithm = configuration.CompressionAlgorithm,

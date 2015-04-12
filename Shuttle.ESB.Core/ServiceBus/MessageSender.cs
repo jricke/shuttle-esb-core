@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using Shuttle.Core.Infrastructure;
 
@@ -57,6 +58,34 @@ namespace Shuttle.ESB.Core
 			return transportMessagePipeline.State.GetTransportMessage();
 		}
 
+        public TransportMessage CreateTransportMessage(string messageType, Stream serializedMessage, Action<TransportMessageConfigurator> configure)
+        {
+            Guard.AgainstNullOrEmptyString(messageType, "messageType");
+            Guard.AgainstNull(serializedMessage, "serializedMessage");
+
+            var transportMessagePipeline = _bus.Configuration.PipelineFactory.GetPipeline<TransportStreamPipeline>(_bus);
+
+            var transportMessageConfigurator = new TransportMessageConfigurator(messageType, serializedMessage);
+
+            if (_transportMessageReceived != null)
+            {
+                transportMessageConfigurator.TransportMessageReceived(_transportMessageReceived);
+            }
+
+            if (configure != null)
+            {
+                configure(transportMessageConfigurator);
+            }
+
+            if (!transportMessagePipeline.Execute(transportMessageConfigurator))
+            {
+                throw new PipelineException(string.Format(ESBResources.PipelineExecutionException, "TransportMessagePipeline",
+                                                          transportMessagePipeline.Exception.AllMessages()));
+            }
+
+            return transportMessagePipeline.State.GetTransportMessage();
+        }
+
 		public void Dispatch(TransportMessage transportMessage)
 		{
 			Guard.AgainstNull(transportMessage, "transportMessage");
@@ -73,62 +102,97 @@ namespace Shuttle.ESB.Core
 			}
 		}
 
-		public TransportMessage Send(object message)
-		{
-			return Send(message, null);
-		}
+        public TransportMessage Send(object message)
+        {
+            return Send(message, null);
+        }
 
-		public TransportMessage Send(object message, Action<TransportMessageConfigurator> configure)
-		{
-			Guard.AgainstNull(message, "message");
+        public TransportMessage Send(string messageType, Stream serializedMessage)
+        {
+            return Send(messageType, serializedMessage, null);
+        }
 
-			var result = CreateTransportMessage(message, configure);
+        public TransportMessage Send(object message, Action<TransportMessageConfigurator> configure)
+        {
+            Guard.AgainstNull(message, "message");
 
-			Dispatch(result);
+            var result = CreateTransportMessage(message, configure);
 
-			return result;
-		}
+            Dispatch(result);
 
-		public IEnumerable<TransportMessage> Publish(object message)
-		{
-			return Publish(message, null);
-		}
+            return result;
+        }
+
+        public TransportMessage Send(string messageType, Stream serializedMessage, Action<TransportMessageConfigurator> configure)
+        {
+            Guard.AgainstNullOrEmptyString(messageType, "messageType");
+            Guard.AgainstNull(serializedMessage, "serializedMessage");
+
+            var result = CreateTransportMessage(messageType, serializedMessage, configure);
+
+            Dispatch(result);
+
+            return result;
+        }
+        
+        public IEnumerable<TransportMessage> Publish(object message)
+        {
+            return Publish(message, null);
+        }
+
+        public IEnumerable<TransportMessage> Publish(string messageType, Stream serializedMessage)
+        {
+            return Publish(messageType, serializedMessage, null);
+        }
 
 		public IEnumerable<TransportMessage> Publish(object message, Action<TransportMessageConfigurator> configure)
 		{
 			Guard.AgainstNull(message, "message");
 
-			if (_bus.Configuration.HasSubscriptionManager)
-			{
-				var subscribers = _bus.Configuration.SubscriptionManager.GetSubscribedUris(message).ToList();
-
-				if (subscribers.Count > 0)
-				{
-					var result = new List<TransportMessage>();
-
-					foreach (var subscriber in subscribers)
-					{
-						var transportMessage = CreateTransportMessage(message, configure);
-
-						transportMessage.RecipientInboxWorkQueueUri = subscriber;
-
-						Dispatch(transportMessage);
-
-						result.Add(transportMessage);
-					}
-
-					return result;
-				}
-
-				_log.Warning(string.Format(ESBResources.WarningPublishWithoutSubscribers, message.GetType().FullName));
-			}
-			else
-			{
-				throw new InvalidOperationException(string.Format(ESBResources.PublishWithoutSubscriptionManagerException,
-																  message.GetType().FullName));
-			}
-
-			return EmptyPublishFlyweight;
+		    return Publish(message.GetType().FullName, () => CreateTransportMessage(message, configure));
 		}
+
+        public IEnumerable<TransportMessage> Publish(string messageType, Stream serializedMessage, Action<TransportMessageConfigurator> configure)
+        {
+            Guard.AgainstNullOrEmptyString(messageType, "messageType");
+            Guard.AgainstNull(serializedMessage, "serializedMessage");
+
+            return Publish(messageType, () => CreateTransportMessage(messageType, serializedMessage, configure));
+        }
+
+        private IEnumerable<TransportMessage> Publish(string messageType, Func<TransportMessage> createTransportMessage)
+        {
+            if (_bus.Configuration.HasSubscriptionManager)
+            {
+                var subscribers = _bus.Configuration.SubscriptionManager.GetSubscribedUris(messageType).ToList();
+
+                if (subscribers.Count > 0)
+                {
+                    var result = new List<TransportMessage>();
+
+                    foreach (var subscriber in subscribers)
+                    {
+                        var transportMessage = createTransportMessage();
+
+                        transportMessage.RecipientInboxWorkQueueUri = subscriber;
+
+                        Dispatch(transportMessage);
+
+                        result.Add(transportMessage);
+                    }
+
+                    return result;
+                }
+
+                _log.Warning(string.Format(ESBResources.WarningPublishWithoutSubscribers, messageType));
+            }
+            else
+            {
+                throw new InvalidOperationException(string.Format(ESBResources.PublishWithoutSubscriptionManagerException,
+                                                                  messageType));
+            }
+
+            return EmptyPublishFlyweight;
+        }
 	}
 }

@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -30,6 +31,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -40,6 +42,7 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>bin\x64\Release\</OutputPath>
@@ -51,12 +54,13 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
     <CodeAnalysisFailOnMissingRules>true</CodeAnalysisFailOnMissingRules>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <Framework Condition=" '$(Framework)' == '' ">net35-full</Framework>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Framework)' == 'net35-full'">
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <DefineConstants>$(DefineConstants);NET35FULL</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Framework)' == 'net40-full'">
@@ -97,6 +101,7 @@
     <Compile Include="Configuration\Section\QueueFactoryElement.cs" />
     <Compile Include="Configuration\Section\QueueFactoriesElement.cs" />
     <Compile Include="Configuration\Section\ShuttleConfigurationSection.cs" />
+    <Compile Include="Pipeline\Pipelines\TransportStreamPipeline.cs" />
     <Compile Include="Queues\DefaultUriResolver.cs" />
     <Compile Include="Queues\IUriResolver.cs" />
     <Compile Include="Queues\ResolvedQueue.cs" />
